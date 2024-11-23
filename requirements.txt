@@ -1,1 +1,11 @@
 streamlit
+streamlit
+psycopg2-binary
+datetime
+pandas
+pandas_ta
+numpy<=1.26.3
+pyyaml
+requests
+plotly
+uuid

@@ -1,21 +1,17 @@
 import streamlit as st
 from datetime import datetime, timedelta
-from datetime import time
-from time import sleep
 from zoneinfo import ZoneInfo
 import pandas_ta as ta
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-#from concurrent.futures import ProcessPoolExecutor
 import uuid
 import psycopg2
 from psycopg2 import pool
-#from psycopg2.extras import execute_values
 
-query_data = st.secrets["query"]["data"]
-query_ticker = st.secrets["query"]["ticker"]
+query_data = st.secrets.query.data
+query_ticker = st.secrets.query.ticker
 
 # Define local timezone. Get current UTC time and convert to local time
 local_timezone = ZoneInfo("Asia/Bangkok")
@@ -28,11 +24,11 @@ local_today = datetime.now(local_timezone).date()
 if 'db_pool' not in st.session_state:
     st.session_state.db_pool = psycopg2.pool.SimpleConnectionPool(
         1, 20,  # Min 1 and max 20 connections in the pool
-        user="postgres",
-        password="J,@CC2@oCa{R'^O]",
-        host="34.142.206.64",
-        port="5432",
-        database="postgres"
+        user=st.secrets.database.user,
+        password=st.secrets.database.password,
+        host=st.secrets.database.host,
+        port=st.secrets.database.port,
+        database=st.secrets.database.dbname
     )
 
 # Function to get a connection from the pool
@@ -282,27 +278,6 @@ if "df" not in st.session_state:
 
 try:
     if fromdate <= todate:
-        while (todate == local_today and ((now.replace(hour=8, minute=45, second=00, microsecond=000) <= now <= now.replace(hour=11, minute=31, second=59, microsecond=999)) 
-                                            or (now.replace(hour=13, minute=00, second=00, microsecond=000) <= now <= now.replace(hour=14, minute=45, second=59, microsecond=999))
-                                            or (now.replace(hour=20, minute=29, second=59, microsecond=999) <= now <= now.replace(hour=23, minute=59, second=59, microsecond=999)))):
-            now = datetime.now(local_timezone)
-            totime = now.time()
-            df = get_stock_data(symbol, fromdate, todate)
-            print(df)
-
-            st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= fromdate, :])
-            st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-            st.session_state['df']['rsi'] = ta.rsi(st.session_state['df']['priceaverage'], length=interval, mamode='ema')
-
-            with stick_placeholder:
-                st.session_state['stick'] = group_backward(st.session_state['df'], length)
-                render_hollow(st.session_state['stick'])
-            
-            with chart_placeholder:
-                render_chart(st.session_state['df'])
-
-            print('sleeping 20')
-            sleep(20)  # Wait for 60 seconds before the next update
 
         if (st.session_state['df'] is None 
             or st.session_state['selected_stock'] != symbol 
@@ -314,16 +289,12 @@ try:
         
         df = get_stock_data(symbol, fromdate, todate)
         
-        print('not while')
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-
-        st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')
-        
+        st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
         st.session_state['stick'] = group_backward(st.session_state['df'], length)
 
-        render_hollow(st.session_state['stick'])
-        
+        render_hollow(st.session_state['stick'])        
         render_chart(st.session_state['df'])
 
     else:

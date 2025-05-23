@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 from datetime import datetime, timedelta
 from time import sleep
 from zoneinfo import ZoneInfo
@@ -279,24 +280,9 @@ if "df" not in st.session_state:
 
 try:
     if fromdate <= todate:
-        while (todate == local_today and ((now.replace(hour=9, minute=14, second=59, microsecond=999) <= now <= now.replace(hour=11, minute=30, second=59, microsecond=999)) 
-                                            or (now.replace(hour=12, minute=59, second=59, microsecond=999) <= now <= now.replace(hour=14, minute=45, second=59, microsecond=999)))):
-            now = datetime.now(local_timezone)
-            totime = now.time()
-            df = get_stock_data(symbol, fromdate, todate)
-            
-            st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= fromdate, :])
-            st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-            st.session_state['df']['rsi'] = ta.rsi(st.session_state['df']['priceaverage'], length=interval, mamode='ema')
-
-            with stick_placeholder:
-                st.session_state['stick'] = group_backward(st.session_state['df'], length)
-                render_hollow(st.session_state['stick'])
-            
-            with chart_placeholder:
-                render_chart(st.session_state['df'])
-
-            sleep(300)  # Wait for 60 seconds before the next update
+        
+        # update every 5 mins
+        st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
 
         if (st.session_state['df'] is None 
             or st.session_state['selected_stock'] != symbol 

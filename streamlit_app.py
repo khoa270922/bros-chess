@@ -259,10 +259,10 @@ tickers = get_ticker()
 with st.sidebar:
     with st.form("form_key"):
         symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
-        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=13), max_value=local_today)
+        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=26), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
-        interval = st.selectbox('BLOCK engine/rsi:', options=[5, 8, 13])
+        interval = st.selectbox('BLOCK engine/rsi:', options=[13, 5, 8])
         submit_btn = st.form_submit_button("Submit")
 
 entrydate = fromdate - timedelta(weeks=1)

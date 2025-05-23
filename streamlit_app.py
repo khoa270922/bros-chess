@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime, timedelta
+from time import sleep
 from zoneinfo import ZoneInfo
 import pandas_ta as ta
 import pandas as pd
@@ -258,10 +259,10 @@ tickers = get_ticker()
 with st.sidebar:
     with st.form("form_key"):
         symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
-        fromdate = st.date_input("From date:", value=local_today - timedelta(days=365), max_value=local_today)
+        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=5), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
-        length = st.selectbox('Group of ticks:', options=[5, 1, 2, 3, 8, 13])
-        interval = st.selectbox('ENGINE/ RSI interval:', options=[5, 8, 13])
+        length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
+        interval = st.selectbox('BLOCK engine/rsi:', options=[5, 8, 13])
         submit_btn = st.form_submit_button("Submit")
 
 entrydate = fromdate - timedelta(weeks=1)
@@ -278,6 +279,24 @@ if "df" not in st.session_state:
 
 try:
     if fromdate <= todate:
+        while (todate == local_today and ((now.replace(hour=9, minute=14, second=59, microsecond=999) <= now <= now.replace(hour=11, minute=30, second=59, microsecond=999)) 
+                                            or (now.replace(hour=12, minute=59, second=59, microsecond=999) <= now <= now.replace(hour=14, minute=45, second=59, microsecond=999)))):
+            now = datetime.now(local_timezone)
+            totime = now.time()
+            df = get_stock_data(symbol, fromdate, todate)
+            
+            st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= fromdate, :])
+            st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
+            st.session_state['df']['rsi'] = ta.rsi(st.session_state['df']['priceaverage'], length=interval, mamode='ema')
+
+            with stick_placeholder:
+                st.session_state['stick'] = group_backward(st.session_state['df'], length)
+                render_hollow(st.session_state['stick'])
+            
+            with chart_placeholder:
+                render_chart(st.session_state['df'])
+
+            sleep(300)  # Wait for 60 seconds before the next update
 
         if (st.session_state['df'] is None 
             or st.session_state['selected_stock'] != symbol 

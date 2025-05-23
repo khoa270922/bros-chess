@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from datetime import datetime, timedelta
-from time import sleep
 from zoneinfo import ZoneInfo
 import pandas_ta as ta
 import pandas as pd
@@ -252,7 +251,7 @@ def render_hollow(df):
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
 
 # Set page configuration
-st.set_page_config(page_title="Bros-Fu Price Tracker", layout="wide")
+st.set_page_config(page_title="Bros-Chess Tracker", layout="wide")
 
 # Load options
 tickers = get_ticker()

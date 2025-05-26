@@ -11,6 +11,8 @@ import uuid
 import psycopg2
 from psycopg2 import pool
 
+pd.set_option('future.no_silent_downcasting', True)
+
 query_data = st.secrets.query.data
 query_ticker = st.secrets.query.ticker
 
@@ -57,13 +59,14 @@ def get_stock_data(stock_name, fromtime, totime):
     stock_data = cursor.fetchall()
     
     # Get column names dynamically from the cursor description
-    column_names = [desc[0] for desc in cursor.description]    
-    # Convert the stock data to a pandas DataFrame with dynamic column names
-    df = pd.DataFrame(stock_data, columns=column_names)
+    column_names = [desc[0] for desc in cursor.description]
 
     cursor.close()
     return_connection(conn)  # Return the connection back to the pool
-    
+
+    # Convert the stock data to a pandas DataFrame with dynamic column names
+    df = pd.DataFrame(stock_data, columns=column_names)
+
     return df
 
 def group_backward(df, interval):
@@ -123,7 +126,7 @@ def render_chart(data):
     # Add RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
         x=data.index,
-        y=data['rsi']*24800/100, # 43225/100,
+        y=data['rsi']*29920/100, # 43225/100,
         mode='lines',
         line=dict(color='orangered', width=2),
         customdata=f'_{interval}'+ ': ' + data['rsi'].fillna(0).astype(int).astype(str),

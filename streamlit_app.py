@@ -34,39 +34,34 @@ if 'db_pool' not in st.session_state:
         database=st.secrets.database.dbname
     )
 
-# Function to get a connection from the pool
-def get_connection():
-    return st.session_state.db_pool.getconn()
-
-# Function to return a connection to the pool
-def return_connection(conn):
-    st.session_state.db_pool.putconn(conn)
-
 # Fetch distinct stocks
 def get_ticker():
-    conn = get_connection()
+    conn = st.session_state.db_pool.getconn()
     cursor = conn.cursor()
     cursor.execute(query_ticker)
     results = cursor.fetchall()
+    cursor.close()
+    st.session_state.db_pool.putconn(conn)
     return [row[0] for row in results]  # Extract single column values
 
 # Function to query the database using connection pooling
 def get_stock_data(stock_name, fromtime, totime):
-    conn = get_connection()
+    conn = st.session_state.db_pool.getconn()
     cursor = conn.cursor()
     #print(cursor.mogrify(query_thma, (stock_name.strip(), fromdate, todate)).decode())
     cursor.execute(query_data, (stock_name, fromtime, totime))
     stock_data = cursor.fetchall()
     
     # Get column names dynamically from the cursor description
-    column_names = [desc[0] for desc in cursor.description]
-
+    column_names = [desc[0] for desc in cursor.description]    
+    
     cursor.close()
-    return_connection(conn)  # Return the connection back to the pool
-
+    st.session_state.db_pool.putconn(conn)
+    # Return the connection back to the pool
+    
     # Convert the stock data to a pandas DataFrame with dynamic column names
     df = pd.DataFrame(stock_data, columns=column_names)
-
+    
     return df
 
 def group_backward(df, interval):

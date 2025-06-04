@@ -178,7 +178,7 @@ def render_chart(data):
         template="plotly_white",
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
-        height=540,
+        height=480,
         hovermode="x unified"  # Unified hover mode for better readability)
     )
 
@@ -243,7 +243,7 @@ def render_hollow(df):
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         xaxis_rangeslider_visible=False,
-        height=540,
+        height=360,
         hovermode="x unified"  # Unified hover mode for better readability)
     )
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
@@ -257,13 +257,13 @@ tickers = get_ticker()
 with st.sidebar:
     with st.form("form_key"):
         symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
+        st.divider()
         fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=26), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
+        st.divider()
+        interval = st.selectbox('BLOCK engine/rsi:', options=[5, 8, 13])
         length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
-        interval = st.selectbox('BLOCK engine/rsi:', options=[13, 5, 8])
         submit_btn = st.form_submit_button("Submit")
-
-entrydate = fromdate - timedelta(weeks=1)
 
 # Placeholder for the chart
 stick_placeholder = st.empty()
@@ -296,8 +296,9 @@ try:
         st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
         st.session_state['stick'] = group_backward(st.session_state['df'], length)
 
-        render_hollow(st.session_state['stick'])        
         render_chart(st.session_state['df'])
+        render_hollow(st.session_state['stick'])        
+        
 
     else:
         st.warning('From date must be before end date!')

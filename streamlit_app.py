@@ -170,6 +170,7 @@ def render_chart(data):
         ),
         yaxis2=dict(
             title=None,  # Secondary y-axis for price
+            tickfont=dict(family="Arial Black"),
             overlaying="y",  # Overlay on the same plot
             side="right",  # Display on the right
             showgrid=False  # Optional: Hide gridlines for secondary y-axis
@@ -234,6 +235,7 @@ def render_hollow(df):
     )
 
     fig.update_xaxes(visible=False, showticklabels=False)
+    fig.update_yaxes(tickfont_family="Arial Black")
     fig.update_layout(
         xaxis_title=None,  # Common x-axis
         yaxis=dict(
@@ -263,6 +265,7 @@ with st.sidebar:
         st.divider()
         interval = st.selectbox('BLOCK engine/rsi:', options=[5, 8, 13])
         length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
+        st.divider()
         submit_btn = st.form_submit_button("Submit")
 
 # Placeholder for the chart

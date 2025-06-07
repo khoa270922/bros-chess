@@ -263,8 +263,8 @@ with st.sidebar:
         fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=26), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
-        interval = st.selectbox('BLOCK engine/rsi:', options=[5, 8, 13])
-        length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
+        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[5, 8, 13])
+        #length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
         st.divider()
         submit_btn = st.form_submit_button("Submit")
 
@@ -297,7 +297,7 @@ try:
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
         st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
-        st.session_state['stick'] = group_backward(st.session_state['df'], length)
+        st.session_state['stick'] = group_backward(st.session_state['df'], interval)
 
         render_chart(st.session_state['df'])
         render_hollow(st.session_state['stick'])        

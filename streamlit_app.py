@@ -340,8 +340,8 @@ try:
     if fromdate <= todate:
         
         # update every 5 mins
-        st_autorefresh(interval=5 * 60 * 1000, key="dataframerefresh")
-
+        st_autorefresh(interval=1 * 60 * 1000, key="dataframerefresh")
+        
         if (st.session_state['df'] is None 
             or st.session_state['selected_stock'] != symbol 
             or st.session_state['fromdate'] != fromdate or st.session_state['todate'] != todate):
@@ -351,13 +351,13 @@ try:
             st.session_state['todate'] = todate
         
         df = get_stock_data(symbol, fromdate, todate)
-        
+        df = df.astype({col: 'float64' for col in ['pricehigh', 'pricelow', 'priceclose']})
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
         st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
-        st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval)
+        st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
-
+        
         render_chart(st.session_state['df'])
         render_volume(st.session_state['df'])
         render_hollow(st.session_state['stick'])        

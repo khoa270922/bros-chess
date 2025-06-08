@@ -180,6 +180,7 @@ def render_chart(data):
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         height=480,
+        hoverlabel=dict(bgcolor="white", font_size=16),
         hovermode="x unified"  # Unified hover mode for better readability)
     )
 
@@ -266,6 +267,7 @@ def render_hollow(df):
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         xaxis_rangeslider_visible=False,
         height=360,
+        hoverlabel=dict(bgcolor="white", font_size=16),
         hovermode="x unified"  # Unified hover mode for better readability)
     )
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
@@ -322,6 +324,7 @@ def render_volume(df):
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         height=240,
+        hoverlabel=dict(bgcolor="white", font_size=16),
         hovermode="x unified"  # Unified hover mode for better readability)
     )
 

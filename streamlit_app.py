@@ -213,14 +213,26 @@ def render_hollow(df):
             low=df['pricelow'],
             close=df['priceclose'],
             showlegend=False,
-            name = None
+            name = None,
+            yaxis='y' 
             )#,
         #row=1,
         #col=1
     )
     fig.update_traces(name='', selector=dict(type='candlestick'))
     showlegend = False
-
+        # Add RSI line trace to the left y-axis
+    
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['atr'], # 43225/100,
+        mode='lines',
+        line=dict(color='blue', width=2),
+        customdata=f'_{interval}'+ ': ' + df['atr'].fillna(0).astype(int).astype(str),
+        name='atr',
+        hovertemplate= 'atr%{customdata}<extra></extra>',
+        yaxis='y2'  # Left y-axis
+    ))
     #fig.add_trace(
     #    go.Bar(
     #        x=df.index,
@@ -242,6 +254,13 @@ def render_hollow(df):
         yaxis=dict(
             title=None,  # Primary y-axis for signals
             side="right"
+        ),
+        yaxis2=dict(
+            title=None,  # Secondary y-axis for price
+            overlaying="y",  # Overlay on the same plot
+            tickformat=".2f",
+            side="left",  # Display on the right
+            showgrid=False,
         ),
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
@@ -318,7 +337,7 @@ with st.sidebar:
     with st.form("form_key"):
         symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
         st.divider()
-        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=26), max_value=local_today)
+        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=52), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
         interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[5, 8, 13])
@@ -357,6 +376,7 @@ try:
         st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
         st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
+        st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
         
         render_chart(st.session_state['df'])
         render_volume(st.session_state['df'])

@@ -193,17 +193,18 @@ def render_hollow(df):
     df['fill'] = np.where(df['priceclose'] > df['priceopen'], "rgba(128,128,128,0.5)", df['color'])
 
     # Initialize empty plot with marginal subplots
-    fig = make_subplots(
-        rows=2,
-        cols=1,
-        shared_xaxes="columns",
-        shared_yaxes="rows",
-        #column_width=[0.8, 0.2],
-        row_heights=[0.8, 0.2],
-        horizontal_spacing=0,
-        vertical_spacing=0,
-    )
-   
+    #fig = make_subplots(
+    #    rows=2,
+    #    cols=1,
+    #    shared_xaxes="columns",
+    #    shared_yaxes="rows",
+    #    #column_width=[0.8, 0.2],
+    #    row_heights=[0.8, 0.2],
+    #    horizontal_spacing=0,
+    #    vertical_spacing=0,
+    #)
+    fig = go.Figure()
+    
     fig.add_trace(
         go.Candlestick(
             x=df.index,
@@ -213,26 +214,26 @@ def render_hollow(df):
             close=df['priceclose'],
             showlegend=False,
             name = None
-            ),
-        row=1,
-        col=1
+            )#,
+        #row=1,
+        #col=1
     )
     fig.update_traces(name='', selector=dict(type='candlestick'))
     showlegend = False
 
-    fig.add_trace(
-        go.Bar(
-            x=df.index,
-            y=df['dealvolume'],
-            showlegend=False,
-            marker_line_color=df['color'],
-            marker_color=df['fill'],
-            name=f"{df['dealvolume'].iloc[-1]}",
-            hovertemplate='%{y}<extra></extra>',
-        ),
-        col=1,
-        row=2,
-    )
+    #fig.add_trace(
+    #    go.Bar(
+    #        x=df.index,
+    #        y=df['dealvolume'],
+    #        showlegend=False,
+    #        marker_line_color=df['color'],
+    #        marker_color=df['fill'],
+    #        name=f"{df['dealvolume'].iloc[-1]}",
+    #        hovertemplate='%{y}<extra></extra>',
+    #   ),
+    #    col=1,
+    #    row=2,
+    #)
 
     fig.update_xaxes(visible=False, showticklabels=False)
     fig.update_yaxes(tickfont_family="Arial Black")
@@ -248,6 +249,63 @@ def render_hollow(df):
         height=360,
         hovermode="x unified"  # Unified hover mode for better readability)
     )
+    st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
+
+def render_volume(df):
+
+    df['pC'] = df['priceclose'].shift(1)
+    # Define color based on close and previous close
+    df['color'] = np.where(df['priceclose'] > df['pC'], "lightgreen", "orangered")
+    # Set fill to transparent if close > open and the previously defined color otherwise
+    df['fill'] = np.where(df['priceclose'] > df['priceopen'], "rgba(128,128,128,0.5)", df['color'])
+    fig = go.Figure()
+    
+    fig.add_trace(go.Bar(
+        x=df.index,
+        y=df['dealvolume'],
+        showlegend=False,
+        marker_line_color=df['color'],
+        marker_color=df['fill'],
+        name=f'{df['dealvolume'].iloc[-1]}',
+        hovertemplate='vol: %{y}<extra></extra>',
+        yaxis='y' 
+    ))
+    # Add RSI line trace to the left y-axis
+    fig.add_trace(go.Scatter(
+        x=df.index,
+        y=df['atr'], # 43225/100,
+        mode='lines',
+        line=dict(color='blue', width=2),
+        customdata=f'_{interval}'+ ': ' + df['atr'].fillna(0).astype(int).astype(str),
+        name='atr',
+        hovertemplate= 'atr%{customdata}<extra></extra>',
+        yaxis='y2'  # Left y-axis
+    ))
+    
+    # Customize layout
+    fig.update_xaxes(visible=False, showticklabels=False)
+    fig.update_layout(
+        #title="Track history index",
+        xaxis_title=None,  # Common x-axis
+        yaxis=dict(
+            title=None,  # Primary y-axis for signals
+            side="left"
+        ),
+        yaxis2=dict(
+            title=None,  # Secondary y-axis for price
+            overlaying="y",  # Overlay on the same plot
+            tickformat=".2f",
+            side="right",  # Display on the right
+            showgrid=False,
+        ),
+        legend=dict(title=None),
+        template="plotly_white",
+        showlegend=False,
+        margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
+        height=240,
+        hovermode="x unified"  # Unified hover mode for better readability)
+    )
+
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
 
 # Set page configuration
@@ -297,11 +355,12 @@ try:
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
         st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
+        st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval)
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
 
         render_chart(st.session_state['df'])
+        render_volume(st.session_state['df'])
         render_hollow(st.session_state['stick'])        
-        
 
     else:
         st.warning('From date must be before end date!')

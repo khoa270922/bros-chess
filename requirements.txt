@@ -4,7 +4,7 @@ psycopg2-binary
 datetime
 pandas
 pandas_ta
-numpy<=1.26.3
+numpy
 pyyaml
 requests
 plotly

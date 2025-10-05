@@ -287,7 +287,7 @@ def render_volume(df):
         showlegend=False,
         marker_line_color=df['color'],
         marker_color=df['fill'],
-        name=f'{df['dealvolume'].iloc[-1]}',
+        name=f"{df['dealvolume'].iloc[-1]}",
         hovertemplate='vol: %{y}<extra></extra>',
         yaxis='y' 
     ))
@@ -376,11 +376,11 @@ try:
         df = df.astype({col: 'float64' for col in ['pricehigh', 'pricelow', 'priceclose']})
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-        st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceaverage'], length=interval, mamode='ema')        
+        st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')        
         st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
         st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
-        
+        st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
         render_volume(st.session_state['df'])
         render_hollow(st.session_state['stick'])        

@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pandas_ta as ta
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+#from plotly.subplots import make_subplots
 import numpy as np
 import uuid
 import psycopg2
@@ -121,10 +121,10 @@ def render_chart(data):
     # Add RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
         x=data.index,
-        y=data['rsi']*29920/100, # 43225/100,
+        y=data['rsi'],
         mode='lines',
         line=dict(color='orangered', width=2),
-        customdata=f'_{interval}'+ ': ' + data['rsi'].fillna(0).astype(int).astype(str),
+        customdata=f'_{interval}'+ ': ' + (data['rsi']/100).astype(str),
         name='rsi',
         hovertemplate= 'rsi%{customdata}%<extra></extra>',
         yaxis='y'  # Left y-axis
@@ -193,17 +193,6 @@ def render_hollow(df):
     # Set fill to transparent if close > open and the previously defined color otherwise
     df['fill'] = np.where(df['priceclose'] > df['priceopen'], "rgba(128,128,128,0.5)", df['color'])
 
-    # Initialize empty plot with marginal subplots
-    #fig = make_subplots(
-    #    rows=2,
-    #    cols=1,
-    #    shared_xaxes="columns",
-    #    shared_yaxes="rows",
-    #    #column_width=[0.8, 0.2],
-    #    row_heights=[0.8, 0.2],
-    #    horizontal_spacing=0,
-    #    vertical_spacing=0,
-    #)
     fig = go.Figure()
     
     fig.add_trace(
@@ -234,19 +223,6 @@ def render_hollow(df):
         hovertemplate= 'atr%{customdata}<extra></extra>',
         yaxis='y2'  # Left y-axis
     ))
-    #fig.add_trace(
-    #    go.Bar(
-    #        x=df.index,
-    #        y=df['dealvolume'],
-    #        showlegend=False,
-    #        marker_line_color=df['color'],
-    #        marker_color=df['fill'],
-    #        name=f"{df['dealvolume'].iloc[-1]}",
-    #        hovertemplate='%{y}<extra></extra>',
-    #   ),
-    #    col=1,
-    #    row=2,
-    #)
 
     fig.update_xaxes(visible=False, showticklabels=False)
     fig.update_yaxes(tickfont_family="Arial Black")
@@ -338,13 +314,12 @@ tickers = get_ticker()
 
 with st.sidebar:
     with st.form("form_key"):
-        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('ACB') if 'ACB' in tickers else 0)
+        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('FPT') if 'FPT' in tickers else 0)
         st.divider()
-        fromdate = st.date_input("From date:", value=local_today - timedelta(weeks=52), max_value=local_today)
+        fromdate = st.date_input("From date:", value=local_today - timedelta(days=45), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
-        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[5, 21])
-        #length = st.selectbox('Tick interval (days):', options=[5, 1, 2, 3, 8, 13])
+        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377])
         st.divider()
         submit_btn = st.form_submit_button("Submit")
 
@@ -362,7 +337,7 @@ try:
     if fromdate <= todate:
         
         # update every 5 mins
-        st_autorefresh(interval=1 * 60 * 1000, key="dataframerefresh")
+        #st_autorefresh(interval=1 * 60 * 1000, key="dataframerefresh")
         
         if (st.session_state['df'] is None 
             or st.session_state['selected_stock'] != symbol 
@@ -376,11 +351,11 @@ try:
         df = df.astype({col: 'float64' for col in ['pricehigh', 'pricelow', 'priceclose']})
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-        st.session_state['df'].loc[:, 'rsi'] = ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')        
+        st.session_state['df'].loc[:, 'rsi'] = round(ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')*100)
         st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
         st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
-        st.dataframe((st.session_state['df']))
+        #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
         render_volume(st.session_state['df'])
         render_hollow(st.session_state['stick'])        

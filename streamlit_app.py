@@ -213,16 +213,16 @@ def render_hollow(df):
     showlegend = False
         # Add RSI line trace to the left y-axis
     
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['atr'], # 43225/100,
-        mode='lines',
-        line=dict(color='blue', width=2),
-        customdata=f'_{interval}'+ ': ' + df['atr'].fillna(0).astype(int).astype(str),
-        name='atr',
-        hovertemplate= 'atr%{customdata}<extra></extra>',
-        yaxis='y2'  # Left y-axis
-    ))
+#    fig.add_trace(go.Scatter(
+#        x=df.index,
+#        y=df['dealvolume'],
+#        mode='lines',
+#        line=dict(color='blue', width=2),
+        
+#        name=f"{df['dealvolume'].iloc[-1]}",
+#        hovertemplate='vol: %{y}<extra></extra>',
+#        yaxis='y2'  # Map to second y-axis
+#    ))
 
     fig.update_xaxes(visible=False, showticklabels=False)
     fig.update_yaxes(tickfont_family="Arial Black")
@@ -232,13 +232,13 @@ def render_hollow(df):
             title=None,  # Primary y-axis for signals
             side="right"
         ),
-        yaxis2=dict(
-            title=None,  # Secondary y-axis for price
-            overlaying="y",  # Overlay on the same plot
-            tickformat=".2f",
-            side="left",  # Display on the right
-            showgrid=False,
-        ),
+#        yaxis2=dict(
+#            title=None,  # Secondary y-axis for price
+#            overlaying="y",  # Overlay on the same plot
+            #tickformat=".2f",
+#            side="left",  # Display on the right
+#            showgrid=False,
+#        ),
         showlegend=False,
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         xaxis_rangeslider_visible=False,
@@ -248,63 +248,63 @@ def render_hollow(df):
     )
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
 
-def render_volume(df):
+#def render_volume(df):
 
-    df['pC'] = df['priceclose'].shift(1)
+#    df['pC'] = df['priceclose'].shift(1)
     # Define color based on close and previous close
-    df['color'] = np.where(df['priceclose'] > df['pC'], "lightgreen", "orangered")
+#    df['color'] = np.where(df['priceclose'] > df['pC'], "lightgreen", "orangered")
     # Set fill to transparent if close > open and the previously defined color otherwise
-    df['fill'] = np.where(df['priceclose'] > df['priceopen'], "rgba(128,128,128,0.5)", df['color'])
-    fig = go.Figure()
+#    df['fill'] = np.where(df['priceclose'] > df['priceopen'], "rgba(128,128,128,0.5)", df['color'])
+#    fig = go.Figure()
     
-    fig.add_trace(go.Bar(
-        x=df.index,
-        y=df['dealvolume'],
-        showlegend=False,
-        marker_line_color=df['color'],
-        marker_color=df['fill'],
-        name=f"{df['dealvolume'].iloc[-1]}",
-        hovertemplate='vol: %{y}<extra></extra>',
-        yaxis='y' 
-    ))
+#    fig.add_trace(go.Bar(
+#        x=df.index,
+#        y=df['dealvolume'],
+#        showlegend=False,
+#        marker_line_color=df['color'],
+#        marker_color=df['fill'],
+#        name=f"{df['dealvolume'].iloc[-1]}",
+#        hovertemplate='vol: %{y}<extra></extra>',
+#        yaxis='y' 
+#    ))
     # Add RSI line trace to the left y-axis
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df['atr'], # 43225/100,
-        mode='lines',
-        line=dict(color='blue', width=2),
-        customdata=f'_{interval}'+ ': ' + df['atr'].fillna(0).astype(int).astype(str),
-        name='atr',
-        hovertemplate= 'atr%{customdata}<extra></extra>',
-        yaxis='y2'  # Left y-axis
-    ))
+#    fig.add_trace(go.Scatter(
+#        x=df.index,
+#        y=df['atr'], # 43225/100,
+#        mode='lines',
+#        line=dict(color='blue', width=2),
+#        customdata=f'_{interval}'+ ': ' + df['atr'].fillna(0).astype(int).astype(str),
+#        name='atr',
+#        hovertemplate= 'atr%{customdata}<extra></extra>',
+#        yaxis='y2'  # Left y-axis
+#    ))
     
     # Customize layout
-    fig.update_xaxes(visible=False, showticklabels=False)
-    fig.update_layout(
+#    fig.update_xaxes(visible=False, showticklabels=False)
+#    fig.update_layout(
         #title="Track history index",
-        xaxis_title=None,  # Common x-axis
-        yaxis=dict(
-            title=None,  # Primary y-axis for signals
-            side="left"
-        ),
-        yaxis2=dict(
-            title=None,  # Secondary y-axis for price
-            overlaying="y",  # Overlay on the same plot
-            tickformat=".2f",
-            side="right",  # Display on the right
-            showgrid=False,
-        ),
-        legend=dict(title=None),
-        template="plotly_white",
-        showlegend=False,
-        margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
-        height=240,
-        hoverlabel=dict(bgcolor="white", font_size=16),
-        hovermode="x unified"  # Unified hover mode for better readability)
-    )
+#        xaxis_title=None,  # Common x-axis
+#        yaxis=dict(
+#            title=None,  # Primary y-axis for signals
+#            side="left"
+#        ),
+#        yaxis2=dict(
+#            title=None,  # Secondary y-axis for price
+#            overlaying="y",  # Overlay on the same plot
+#            tickformat=".2f",
+#            side="right",  # Display on the right
+#            showgrid=False,
+#        ),
+#        legend=dict(title=None),
+#        template="plotly_white",
+#        showlegend=False,
+#        margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
+#        height=240,
+#        hoverlabel=dict(bgcolor="white", font_size=16),
+#        hovermode="x unified"  # Unified hover mode for better readability)
+#    )
 
-    st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
+#    st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
 
 # Set page configuration
 st.set_page_config(page_title="Bros-Chess Tracker", layout="wide")
@@ -314,12 +314,12 @@ tickers = get_ticker()
 
 with st.sidebar:
     with st.form("form_key"):
-        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('FPT') if 'FPT' in tickers else 0)
+        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
         st.divider()
-        fromdate = st.date_input("From date:", value=local_today - timedelta(days=45), max_value=local_today)
+        fromdate = st.date_input("From date:", value=local_today - timedelta(days=60), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
-        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377])
+        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377], index=1)
         st.divider()
         submit_btn = st.form_submit_button("Submit")
 
@@ -357,7 +357,7 @@ try:
         st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
         #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
-        render_volume(st.session_state['df'])
+#        render_volume(st.session_state['df'])
         render_hollow(st.session_state['stick'])        
 
     else:

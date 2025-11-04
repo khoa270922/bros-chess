@@ -99,7 +99,8 @@ def render_chart(data):
         x=data.index,
         y=data['priceclose'],
         mode='lines',
-        line=dict(color='green', width=2),
+#        line=dict(color='green', width=2),
+        line=dict(color='yellow', width=2),
         customdata=data['date'].astype(str)+': ' + data['time'].astype(str),
         name=f"{data['priceclose'].iloc[-1]}",
         hovertemplate='close: %{y}<br>%{customdata}<extra></extra>', #<br>
@@ -107,16 +108,16 @@ def render_chart(data):
     ))
 
     # Add price line on second y-axis
-    fig.add_trace(go.Scatter(
-        x=data.index,
-        y=data['priceaverage'],
-        mode='lines',
-        line=dict(color='yellow', width=2),
-        customdata=data['date'].astype(str)+' '+data['time'].astype(str),
-        name=f"{data['priceaverage'].iloc[-1]}",
-        hovertemplate='avg: %{y}<extra></extra>',
-        yaxis='y2'  # Map to second y-axis
-    ))
+#    fig.add_trace(go.Scatter(
+#        x=data.index,
+#        y=data['priceaverage'],
+#        mode='lines',
+#        line=dict(color='yellow', width=2),
+#        customdata=data['date'].astype(str)+' '+data['time'].astype(str),
+#        name=f"{data['priceaverage'].iloc[-1]}",
+#        hovertemplate='avg: %{y}<extra></extra>',
+#        yaxis='y2'  # Map to second y-axis
+#    ))
     
     # Add RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
@@ -124,7 +125,8 @@ def render_chart(data):
         y=data['rsi'],
         mode='lines',
         line=dict(color='orangered', width=2),
-        customdata=f'_{interval}'+ ': ' + (data['rsi']/100).astype(str),
+#        customdata=f'_{interval}'+ ': ' + (data['rsi']/100).astype(str),
+        customdata=': ' + (data['rsi']/100).astype(str),
         name='rsi',
         hovertemplate= 'rsi%{customdata}%<extra></extra>',
         yaxis='y'  # Left y-axis
@@ -136,7 +138,8 @@ def render_chart(data):
         mode='lines',
         line=dict(color='white'),  # Use variable interval
         fillcolor='rgba(0, 0, 0, 0)',  # Transparent fill
-        name=f'L_{interval}',
+#        name=f'L_{interval}',
+        name='L',
         stackgroup='chance',  # Dynamic stack group based on interval
         groupnorm=''  # Disable normalization
     ))
@@ -146,7 +149,8 @@ def render_chart(data):
         y=data[f'n_{interval}'],
         mode='lines',
         line=dict(width=1.0, color='blue'),  # Use variable interval
-        name=f'N_{interval}',
+#        name=f'N_{interval}',
+        name='N',
         stackgroup='chance',  # Dynamic stack group based on interval
     ))
     
@@ -155,7 +159,8 @@ def render_chart(data):
         y=data[f's_{interval}'],
         mode='lines',
         line=dict(color='white'),  # Use variable interval
-        name=f'S_{interval}',
+#        name=f'S_{interval}',
+        name='S',
         stackgroup='chance',  # Dynamic stack group based on interval
     ))
 
@@ -352,9 +357,9 @@ try:
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
         st.session_state['df'].loc[:, 'rsi'] = round(ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')*100)
-        st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
+        #st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
-        st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
+        #st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
         #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
 #        render_volume(st.session_state['df'])

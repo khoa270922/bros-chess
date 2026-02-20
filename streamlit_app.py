@@ -34,7 +34,8 @@ if 'db_pool' not in st.session_state:
         database=st.secrets.database.dbname
     )
 
-# Fetch distinct stocks
+# Fetch distinct stocks - CACHED to avoid repeated DB queries
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def get_ticker():
     conn = st.session_state.db_pool.getconn()
     cursor = conn.cursor()
@@ -44,89 +45,82 @@ def get_ticker():
     st.session_state.db_pool.putconn(conn)
     return [row[0] for row in results]  # Extract single column values
 
-# Function to query the database using connection pooling
+# Function to query the database using connection pooling - CACHED
+@st.cache_data(ttl=1800)  # Cache for 30 minutes
 def get_stock_data(stock_name, fromtime, totime):
+    """Fetch stock data from database with caching"""
     conn = st.session_state.db_pool.getconn()
     cursor = conn.cursor()
-    #print(cursor.mogrify(query_thma, (stock_name.strip(), fromdate, todate)).decode())
-    cursor.execute(query_data, (stock_name, fromtime, totime))
-    stock_data = cursor.fetchall()
-    
-    # Get column names dynamically from the cursor description
-    column_names = [desc[0] for desc in cursor.description]    
-    
-    cursor.close()
-    st.session_state.db_pool.putconn(conn)
-    # Return the connection back to the pool
+    try:
+        cursor.execute(query_data, (stock_name, fromtime, totime))
+        stock_data = cursor.fetchall()
+        
+        # Get column names dynamically from the cursor description
+        column_names = [desc[0] for desc in cursor.description]    
+    finally:
+        cursor.close()
+        st.session_state.db_pool.putconn(conn)
     
     # Convert the stock data to a pandas DataFrame with dynamic column names
     df = pd.DataFrame(stock_data, columns=column_names)
-    
     return df
 
 def group_backward(df, interval):
+    """Group data backwards with optimized vectorized operations"""
     data = df.copy()    
     if interval == 1:
         return data[['unixtime', 'date', 'time', 'priceaverage', 'priceclose', 'priceopen', 'pricehigh', 'pricelow', 'dealvolume']]        
     else:
-        # Calculate a group index for each row based on reverse order
-        data.loc[:, 'group'] = (data.index // interval)[::-1]        
-        # Group by the 'group' column and calculate the weighted average price ('priceaverage')
-        df = data.set_index('group').groupby('group').apply(
-            lambda g: pd.Series({
-                't': g['unixtime'].iloc[-1],       # Take the most recent unix_time in each group
-                'date': g['date'].iloc[-1],            # Take the most recent date
-                'time': g['time'].iloc[-1],            # Take the most recent time
-                #'priceaverage': (g['priceaverage'] * g['dealvolume']).sum() / g['dealvolume'].sum(),  # Weighted average price
-                'priceclose': g['priceclose'].iloc[-1],
-                'priceopen': g['priceopen'].iloc[0],         # First open price in the group
-                'pricehigh': g['pricehigh'].max(),           # Highest price in the group
-                'pricelow': g['pricelow'].min(),           # Lowest price in the group
-                'dealvolume': g['dealvolume'].sum()
-            })
-        ).reset_index(drop=True)
-        # Reverse the order of rows in the DataFrame
-        df = df.iloc[::-1].reset_index(drop=True)
-        result_df = pd.DataFrame(df)
+        # Calculate group index in reverse order more efficiently
+        n = len(data)
+        group_indices = np.arange(n) // interval
+        group_indices = (n - 1 - np.arange(n)) // interval
+        
+        # Use groupby instead of apply for better performance
+        grouped = data.assign(group=group_indices).groupby('group', sort=False)
+        
+        result_data = {
+            'unixtime': grouped['unixtime'].last().values,
+            'date': grouped['date'].last().values,
+            'time': grouped['time'].last().values,
+            'priceclose': grouped['priceclose'].last().values,
+            'priceopen': grouped['priceopen'].first().values,
+            'pricehigh': grouped['pricehigh'].max().values,
+            'pricelow': grouped['pricelow'].min().values,
+            'dealvolume': grouped['dealvolume'].sum().values,
+        }
+        
+        result_df = pd.DataFrame(result_data)
+        # Reverse to match original logic
+        result_df = result_df.iloc[::-1].reset_index(drop=True)
         
         return result_df
 
 def render_chart(data):
     fig = go.Figure()
-    #color_dict = {8: 'blue', 15: 'green', 20: 'orange',30: 'indigo'}
+    
+    # Pre-compute hover text once for better performance
+    hover_date_time = data['date'].astype(str) + ': ' + data['time'].astype(str)
+    rsi_customdata = ': ' + (data[f'rsi_{interval}']/100).astype(str)
     
     fig.add_trace(go.Scatter(
         x=data.index,
         y=data['priceclose'],
         mode='lines',
-#        line=dict(color='green', width=2),
         line=dict(color='yellow', width=2),
-        customdata=data['date'].astype(str)+': ' + data['time'].astype(str),
+        customdata=hover_date_time,
         name=f"{data['priceclose'].iloc[-1]}",
-        hovertemplate='close: %{y}<br>%{customdata}<extra></extra>', #<br>
+        hovertemplate='close: %{y}<br>%{customdata}<extra></extra>',
         yaxis='y2'  # Map to second y-axis
     ))
-
-    # Add price line on second y-axis
-#    fig.add_trace(go.Scatter(
-#        x=data.index,
-#        y=data['priceaverage'],
-#        mode='lines',
-#        line=dict(color='yellow', width=2),
-#        customdata=data['date'].astype(str)+' '+data['time'].astype(str),
-#        name=f"{data['priceaverage'].iloc[-1]}",
-#        hovertemplate='avg: %{y}<extra></extra>',
-#        yaxis='y2'  # Map to second y-axis
-#    ))
     
     # Add RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
         x=data.index,
-        y=data['rsi'],
+        y=data[f'rsi_{interval}'],
         mode='lines',
         line=dict(color='orangered', width=2),
-#        customdata=f'_{interval}'+ ': ' + (data['rsi']/100).astype(str),
-        customdata=': ' + (data['rsi']/100).astype(str),
+        customdata=rsi_customdata,
         name='rsi',
         hovertemplate= 'rsi%{customdata}%<extra></extra>',
         yaxis='y'  # Left y-axis
@@ -186,7 +180,7 @@ def render_chart(data):
         margin=dict(l=0, r=0, t=20, b=0),  # Set margins for wide mode
         height=480,
         hoverlabel=dict(bgcolor="white", font_size=16),
-        hovermode="x unified"  # Unified hover mode for better readability)
+        hovermode="x unified"  # Unified hover mode for better readability
     )
 
     st.plotly_chart(fig, use_container_width=True, key = uuid.uuid4())
@@ -356,7 +350,7 @@ try:
         df = df.astype({col: 'float64' for col in ['pricehigh', 'pricelow', 'priceclose']})
         st.session_state['df'] = pd.DataFrame(df.loc[df['date'] >= st.session_state['fromdate'], :])
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
-        st.session_state['df'].loc[:, 'rsi'] = round(ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')*100)
+        #st.session_state['df'].loc[:, 'rsi'] = round(ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')*100)
         #st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
         st.session_state['stick'] = group_backward(st.session_state['df'], interval)
         #st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')

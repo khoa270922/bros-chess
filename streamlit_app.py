@@ -46,7 +46,7 @@ def get_ticker():
     return [row[0] for row in results]  # Extract single column values
 
 # Function to query the database using connection pooling - CACHED
-@st.cache_data(ttl=1800)  # Cache for 30 minutes
+#@st.cache_data(ttl=1800)  # Cache for 30 minutes
 def get_stock_data(stock_name, fromtime, totime):
     """Fetch stock data from database with caching"""
     conn = st.session_state.db_pool.getconn()

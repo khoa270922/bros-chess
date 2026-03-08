@@ -357,7 +357,7 @@ try:
         #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
 #        render_volume(st.session_state['df'])
-        render_hollow(st.session_state['stick'])        
+#        render_hollow(st.session_state['stick'])        
 
     else:
         st.warning('From date must be before end date!')

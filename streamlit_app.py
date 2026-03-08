@@ -47,6 +47,26 @@ def get_ticker():
 
 # Function to query the database using connection pooling - CACHED
 #@st.cache_data(ttl=1800)  # Cache for 30 minutes
+# Option query is stored in Streamlit secrets so it can be changed without code updates
+query_options = st.secrets.query.options
+
+@st.cache_data(ttl=300)
+def get_option_table(underlying_symbol):
+    """Fetch options/derivatives table for a given underlying symbol."""
+    conn = st.session_state.db_pool.getconn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query_options, (underlying_symbol,))
+        result = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+    finally:
+        cursor.close()
+        st.session_state.db_pool.putconn(conn)
+
+    df = pd.DataFrame(result, columns=column_names)
+    return df
+
+
 def get_stock_data(stock_name, fromtime, totime):
     """Fetch stock data from database with caching"""
     conn = st.session_state.db_pool.getconn()
@@ -313,12 +333,12 @@ tickers = get_ticker()
 
 with st.sidebar:
     with st.form("form_key"):
-        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
+        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('ACB') if 'ACB' in tickers else 0)
         st.divider()
         fromdate = st.date_input("From date:", value=local_today - timedelta(days=60), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
-        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377], index=1)
+        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377], index=0)
         st.divider()
         submit_btn = st.form_submit_button("Submit")
 
@@ -356,6 +376,101 @@ try:
         #st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
         #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
+
+        # Visual separator between chart and table
+        st.divider()
+
+        # Display the related CWVNLAST option/derivative table for the selected underlying
+        options_df = get_option_table(symbol)
+        # Shorten column names for display
+        options_df = options_df.rename(columns={
+            'underlying_symbol': 'Symbol',
+            'issuer_name': 'Issuer',
+            'stock_symbol': 'CW',
+            'exercise_price': 'Execute',
+            'exercise_ratio': 'Ratio',
+            'days_left': 'D_left',
+            'last_trading_date': 'Last_date',
+            'ref_price': 'Reference',
+            'celing': 'Ceiling',
+            'floor': 'Floor',
+            'matched_price': 'Last_price',
+            'matched_volume': 'Last_vol',
+            'price_change': 'Change',
+            'price_change_percent': 'Change_p',
+        })
+
+        # Keep numeric columns numeric but format them for display via pandas Styler.
+        # This avoids Streamlit formatting errors and still allows right-alignment.
+        if options_df.empty:
+            st.info(f"No derivatives found for '{symbol}'")
+        else:
+            # Ensure numeric columns are numeric for formatting
+            # Ensure numeric columns are numeric for proper formatting
+            for col in [
+                'Execute',
+                'Reference',
+                'Ceiling',
+                'Floor',
+                'Last_price',
+                'Last_vol',
+                'Change',
+                'Change_p',
+            ]:
+                if col in options_df.columns:
+                    options_df[col] = pd.to_numeric(options_df[col], errors='coerce')
+
+            # Ensure Last_date is datetime for formatting
+            if 'Last_date' in options_df.columns:
+                options_df['Last_date'] = pd.to_datetime(options_df['Last_date'], errors='coerce')
+
+            format_map = {
+                'Execute': '{:,.0f}',
+                'Reference': '{:,.0f}',
+                'Ceiling': '{:,.0f}',
+                'Floor': '{:,.0f}',
+                'Last_price': '{:,.0f}',
+                'Last_vol': '{:,.0f}',
+                'Change': '{:,.0f}',
+                'Change_p': '{:,.2f}%',
+                'Last_date': '{:%d-%m-%Y}',
+            }
+
+            right_align_cols = [
+                'Execute',
+                'Ratio',
+                'Reference',
+                'Ceiling',
+                'Floor',
+                'Last_price',
+                'Last_vol',
+                'Change',
+                'Change_p',
+            ]
+            cols_to_align = [c for c in right_align_cols if c in options_df.columns]
+
+            styled = options_df.style.format({k: v for k, v in format_map.items() if k in options_df.columns})
+
+            # Color entire row based on the Change column value
+            if 'Change' in options_df.columns:
+                def _row_color(r):
+                    c = r.get('Change')
+                    if pd.isna(c):
+                        return ['' for _ in r]
+                    if c < 0:
+                        color = 'red'
+                    elif c > 0:
+                        color = 'green'
+                    else:
+                        color = 'yellow'
+                    return [f'color: {color}'] * len(r)
+
+                styled = styled.apply(_row_color, axis=1)
+
+            if cols_to_align:
+                styled = styled.set_properties(subset=cols_to_align, **{'text-align': 'right'})
+
+            st.write(styled)
 #        render_volume(st.session_state['df'])
 #        render_hollow(st.session_state['stick'])        
 

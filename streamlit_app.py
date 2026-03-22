@@ -121,13 +121,17 @@ def render_chart(data):
     
     # Pre-compute hover text once for better performance
     hover_date_time = data['date'].astype(str) + ': ' + data['time'].astype(str)
-    rsi_customdata = ': ' + (data[f'rsi_{interval}']/100).astype(str)
+#    rsi_customdata = ': ' + (data[f'rsi_{interval}']/100).astype(str)
+    p_rsi_customdata = ': ' + (data[f'p_rsi_{interval}']/100).astype(str)
+    p_l_customdata = ': ' + (data[f'p_l_{interval}']/100).astype(str)
+    p_n_customdata = ': ' + (data[f'p_n_{interval}']/100).astype(str)
+    p_s_customdata = ': ' + (data[f'p_s_{interval}']/100).astype(str)
     
     fig.add_trace(go.Scatter(
         x=data.index,
         y=data['priceclose'],
         mode='lines',
-        line=dict(color='yellow', width=2),
+        line=dict(color='black', width=2),
         customdata=hover_date_time,
         name=f"{data['priceclose'].iloc[-1]}",
         hovertemplate='close: %{y}<br>%{customdata}<extra></extra>',
@@ -135,17 +139,65 @@ def render_chart(data):
     ))
     
     # Add RSI line trace to the left y-axis
+#    fig.add_trace(go.Scatter(
+#        x=data.index,
+#        y=data[f'rsi_{interval}'],
+#        mode='lines',
+#        line=dict(color='orangered', width=2),
+#        customdata=rsi_customdata,
+#        name='rsi',
+#        hovertemplate= 'rsi%{customdata}%<extra></extra>',
+#        yaxis='y'  # Left y-axis
+#    ))
+
+    # Add p_RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
         x=data.index,
-        y=data[f'rsi_{interval}'],
+        y=data[f'p_rsi_{interval}'],
         mode='lines',
-        line=dict(color='orangered', width=2),
-        customdata=rsi_customdata,
-        name='rsi',
-        hovertemplate= 'rsi%{customdata}%<extra></extra>',
+        line=dict(color='blue', width=2),
+        customdata=p_rsi_customdata,
+        name='p_rsi',
+        hovertemplate= 'p_rsi%{customdata}%<extra></extra>',
         yaxis='y'  # Left y-axis
     ))
-
+    
+        # Add p_l line trace to the left y-axis
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data[f'p_l_{interval}'],
+        mode='lines',
+        line=dict(color='green', width=2),
+        customdata=p_l_customdata,
+        name='p_l',
+        hovertemplate= 'p_l%{customdata}%<extra></extra>',
+        yaxis='y'  # Left y-axis
+    ))
+    
+    # Add p_n line trace to the left y-axis
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data[f'p_n_{interval}'],
+        mode='lines',
+        line=dict(color='yellow', width=2),
+        customdata=p_n_customdata,
+        name='p_n',
+        hovertemplate= 'p_n%{customdata}%<extra></extra>',
+        yaxis='y'  # Left y-axis
+    ))
+    
+    # Add p_s line trace to the left y-axis
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data[f'p_s_{interval}'],
+        mode='lines',
+        line=dict(color='red', width=2),
+        customdata=p_s_customdata,
+        name='p_s',
+        hovertemplate= 'p_s%{customdata}%<extra></extra>',
+        yaxis='y'  # Left y-axis
+    ))
+    
     fig.add_trace(go.Scatter(
         x=data.index,
         y=data[f'l_{interval}'],
@@ -338,7 +390,7 @@ with st.sidebar:
         fromdate = st.date_input("From date:", value=local_today - timedelta(days=60), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
         st.divider()
-        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 377], index=0)
+        interval = st.selectbox('BLOCK engine/rsi/tick length:', options=[233, 34, 55,89, 144, 199, 377], index=0)
         st.divider()
         submit_btn = st.form_submit_button("Submit")
 

@@ -123,15 +123,15 @@ def render_chart(data):
     hover_date_time = data['date'].astype(str) + ': ' + data['time'].astype(str)
 #    rsi_customdata = ': ' + (data[f'rsi_{interval}']/100).astype(str)
     p_rsi_customdata = ': ' + (data[f'p_rsi_{interval}']/100).astype(str)
-    p_l_customdata = ': ' + (data[f'p_l_{interval}']/100).astype(str)
-    p_n_customdata = ': ' + (data[f'p_n_{interval}']/100).astype(str)
-    p_s_customdata = ': ' + (data[f'p_s_{interval}']/100).astype(str)
+#    p_l_customdata = ': ' + (data[f'p_l_{interval}']/100).astype(str)
+#    p_n_customdata = ': ' + (data[f'p_n_{interval}']/100).astype(str)
+#    p_s_customdata = ': ' + (data[f'p_s_{interval}']/100).astype(str)
     
     fig.add_trace(go.Scatter(
         x=data.index,
         y=data['priceclose'],
         mode='lines',
-        line=dict(color='black', width=2),
+        line=dict(color='yellow', width=2),
         customdata=hover_date_time,
         name=f"{data['priceclose'].iloc[-1]}",
         hovertemplate='close: %{y}<br>%{customdata}<extra></extra>',
@@ -163,40 +163,40 @@ def render_chart(data):
     ))
     
         # Add p_l line trace to the left y-axis
-    fig.add_trace(go.Scatter(
-        x=data.index,
-        y=data[f'p_l_{interval}'],
-        mode='lines',
-        line=dict(color='green', width=2),
-        customdata=p_l_customdata,
-        name='p_l',
-        hovertemplate= 'p_l%{customdata}%<extra></extra>',
-        yaxis='y'  # Left y-axis
-    ))
-    
-    # Add p_n line trace to the left y-axis
-    fig.add_trace(go.Scatter(
-        x=data.index,
-        y=data[f'p_n_{interval}'],
-        mode='lines',
-        line=dict(color='yellow', width=2),
-        customdata=p_n_customdata,
-        name='p_n',
-        hovertemplate= 'p_n%{customdata}%<extra></extra>',
-        yaxis='y'  # Left y-axis
-    ))
-    
-    # Add p_s line trace to the left y-axis
-    fig.add_trace(go.Scatter(
-        x=data.index,
-        y=data[f'p_s_{interval}'],
-        mode='lines',
-        line=dict(color='red', width=2),
-        customdata=p_s_customdata,
-        name='p_s',
-        hovertemplate= 'p_s%{customdata}%<extra></extra>',
-        yaxis='y'  # Left y-axis
-    ))
+#    fig.add_trace(go.Scatter(
+#        x=data.index,
+#        y=data[f'p_l_{interval}'],
+#        mode='lines',
+#        line=dict(color='green', width=2),
+#        customdata=p_l_customdata,
+#        name='p_l',
+#        hovertemplate= 'p_l%{customdata}%<extra></extra>',
+#        yaxis='y'  # Left y-axis
+#    ))
+#    
+#    # Add p_n line trace to the left y-axis
+#    fig.add_trace(go.Scatter(
+#        x=data.index,
+#        y=data[f'p_n_{interval}'],
+#        mode='lines',
+#        line=dict(color='yellow', width=2),
+#        customdata=p_n_customdata,
+#        name='p_n',
+#        hovertemplate= 'p_n%{customdata}%<extra></extra>',
+#        yaxis='y'  # Left y-axis
+#    ))
+#    
+#    # Add p_s line trace to the left y-axis
+#    fig.add_trace(go.Scatter(
+#       x=data.index,
+#       y=data[f'p_s_{interval}'],
+#        mode='lines',
+#        line=dict(color='red', width=2),
+#        customdata=p_s_customdata,
+#        name='p_s',
+#        hovertemplate= 'p_s%{customdata}%<extra></extra>',
+#        yaxis='y'  # Left y-axis
+#    ))
     
     fig.add_trace(go.Scatter(
         x=data.index,
@@ -214,7 +214,7 @@ def render_chart(data):
         x=data.index,
         y=data[f'n_{interval}'],
         mode='lines',
-        line=dict(width=1.0, color='blue'),  # Use variable interval
+        line=dict(width=1.0, color='grey'),  # Use variable interval
 #        name=f'N_{interval}',
         name='N',
         stackgroup='chance',  # Dynamic stack group based on interval

@@ -122,7 +122,8 @@ def render_chart(data):
     # Pre-compute hover text once for better performance
     hover_date_time = data['date'].astype(str) + ': ' + data['time'].astype(str)
 #    rsi_customdata = ': ' + (data[f'rsi_{interval}']/100).astype(str)
-    p_rsi_customdata = ': ' + (data[f'p_rsi_{interval}']/100).astype(str)
+#    p_rsi_customdata = ': ' + (data[f'p_rsi_{interval}']/100).astype(str)
+    p_rsi_customdata = ': ' + (data[f'p_rsi_233']/100).astype(str)
 #    p_l_customdata = ': ' + (data[f'p_l_{interval}']/100).astype(str)
 #    p_n_customdata = ': ' + (data[f'p_n_{interval}']/100).astype(str)
 #    p_s_customdata = ': ' + (data[f'p_s_{interval}']/100).astype(str)
@@ -153,7 +154,8 @@ def render_chart(data):
     # Add p_RSI line trace to the left y-axis
     fig.add_trace(go.Scatter(
         x=data.index,
-        y=data[f'p_rsi_{interval}'],
+#        y=data[f'p_rsi_{interval}'],
+        y=data[f'p_rsi_233'],
         mode='lines',
         line=dict(color='blue', width=2),
         customdata=p_rsi_customdata,
@@ -385,7 +387,7 @@ tickers = get_ticker()
 
 with st.sidebar:
     with st.form("form_key"):
-        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('ACB') if 'ACB' in tickers else 0)
+        symbol = st.selectbox("symbol", options=tickers, index=tickers.index('VN30') if 'VN30' in tickers else 0)
         st.divider()
         fromdate = st.date_input("From date:", value=local_today - timedelta(days=60), max_value=local_today)
         todate = st.date_input("To date:", value = local_today, max_value=local_today)
@@ -424,7 +426,7 @@ try:
         st.session_state['df'] = st.session_state['df'].reset_index(drop=True)
         #st.session_state['df'].loc[:, 'rsi'] = round(ta.rsi(st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')*100)
         #st.session_state['df'].loc[:, 'atr'] = ta.atr(st.session_state['df'].loc[:, 'pricehigh'], st.session_state['df'].loc[:, 'pricelow'], st.session_state['df'].loc[:, 'priceclose'], length=interval, mamode='ema')
-        st.session_state['stick'] = group_backward(st.session_state['df'], interval)
+#        st.session_state['stick'] = group_backward(st.session_state['df'], interval)
         #st.session_state['stick'].loc[:, 'atr'] = ta.atr(st.session_state['stick'].loc[:, 'pricehigh'], st.session_state['stick'].loc[:, 'pricelow'], st.session_state['stick'].loc[:, 'priceclose'], length=interval, mamode='ema')
         #st.dataframe((st.session_state['df']))
         render_chart(st.session_state['df'])
